@@ -5,21 +5,24 @@ import createcourier.BestTest;
 import dto.Order;
 import io.restassured.response.Response;
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static io.restassured.RestAssured.given;
+
 import static org.apache.http.HttpStatus.*;
 
 @RunWith(Parameterized.class)
 public class CreateOrderTest extends BestTest {
     private final String firstColour;
     private final String secondColour;
+    Integer track;
+    JSONObject jsonObject;
 
-    public CreateOrderTest(String firstColour, String secondColourr) {
+    public CreateOrderTest(String firstColour, String secondColour) {
         this.firstColour = firstColour;
-        this.secondColour = secondColourr;
+        this.secondColour = secondColour;
     }
 
     @Parameterized.Parameters
@@ -51,20 +54,14 @@ public class CreateOrderTest extends BestTest {
         response.then().log().all()
                 .statusCode(SC_CREATED);
 
-        JSONObject jsonObject = new JSONObject(response.getBody().asString());
-        Response response2 = given()
-                .header("Content-type", "application/json")
-                .header("api_key", "special-key")
-                .get("/v1/orders/track?t" + jsonObject.getInt("track"));
-        response2.then().log().all()
-                .statusCode(SC_OK);
-        given()
-                .header("Content-type", "application/json")
-                .header("api_key", "special-key")
-                .and()
-                .body(jsonObject)
-                .when().log().all()
-                .put("/api/v1/orders/cancel");
+        jsonObject = new JSONObject(response.getBody().asString());
+        track = jsonObject.getInt("track");
+
+    }
+
+    @After
+    public void tearDown() {
+        Response response2 = OrderApi.cancelOrder(track);
         response2
                 .then().log().all()
                 .statusCode(SC_OK);

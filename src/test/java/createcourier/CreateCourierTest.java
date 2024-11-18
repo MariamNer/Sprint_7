@@ -1,16 +1,14 @@
 package createcourier;
 
 import api.CourierApi;
-import api.LoginCourierApi;
 import dto.Courier;
+import api.Sprint_7_utils;
 import io.restassured.response.Response;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Test;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.oneOf;
 import static org.apache.http.HttpStatus.*;
 
 public class CreateCourierTest extends BestTest{
@@ -20,16 +18,16 @@ public class CreateCourierTest extends BestTest{
     @Test
     public void createNewCourier(){
         Courier courier = new Courier(
-                "morkovka",
+                Sprint_7_utils.generateRandomString(),
                 "1234",
                 "morkovka"
 
         );
         Response response = CourierApi.createCourier(courier);
         response.then().log().all()
-                .statusCode((oneOf(SC_CREATED, SC_CONFLICT)));
+                .statusCode(SC_CREATED);
 
-        Response response2 = LoginCourierApi.loginCourier(courier);
+        Response response2 = CourierApi.loginCourier(courier);
         response2.then().log().all()
                 .statusCode(SC_OK);
         JSONObject responseBody = new JSONObject(response2.getBody().asString());
@@ -39,14 +37,14 @@ public class CreateCourierTest extends BestTest{
     @Test
     public void createTwoIdenticalCourier() {
         Courier courier = new Courier(
-                "svekla",
+                Sprint_7_utils.generateRandomString(),
                 "12345",
                 "svekla"
 
         );
         Response response = CourierApi.createCourier(courier);
         response.then().log().all()
-                .statusCode((oneOf(SC_CREATED, SC_CONFLICT)));
+                .statusCode(SC_CREATED);
 
         Response response2 = CourierApi.createCourier(courier);
         response2.then().log().all()
@@ -73,7 +71,7 @@ public class CreateCourierTest extends BestTest{
     @Test
     public void createNewCourierWithoutPassword(){
         Courier courier = new Courier(
-                "kartoshka",
+                Sprint_7_utils.generateRandomString(),
                 "",
                 "kartoshka"
 
@@ -87,16 +85,16 @@ public class CreateCourierTest extends BestTest{
     @Test
     public void createNewCourierWithoutFirstName(){
         Courier courier = new Courier(
-                "kartoshka",
+                Sprint_7_utils.generateRandomString(),
                 "123456",
                 ""
 
         );
         Response response = CourierApi.createCourier(courier);
         response.then().log().all()
-                .statusCode((oneOf(SC_CREATED,SC_CONFLICT)));
+                .statusCode(SC_CREATED);
 
-        Response response2 = LoginCourierApi.loginCourier(courier);
+        Response response2 = CourierApi.loginCourier(courier);
         response2.then().log().all()
                 .statusCode(SC_OK);
 
@@ -108,13 +106,7 @@ public class CreateCourierTest extends BestTest{
     public void CleanUp(){
         if (idLogin == null)
             return;
-        given()
-                .header("Content-type", "application/json")
-                .header("api_key","special-key")
-                .when().log().all()
-                .delete("/api/v1/courier/" + idLogin)
-                .then().log().all()
-                .statusCode(SC_OK);
+        CourierApi.deleteCourier(idLogin);
     }
 
 }
